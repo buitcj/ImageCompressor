@@ -1,0 +1,4 @@
+ImageCompressor
+===============
+
+Hadoop image compressor
