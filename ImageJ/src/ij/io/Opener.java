@@ -238,6 +238,7 @@ public class Opener {
 		Modified by Gregory Jefferis to call HandleExtraFileTypes plugin if 
 		the file type is unrecognised. */
 	public ImagePlus openImage(String directory, String name) {
+		System.out.println("Opener:openImage(str str):IP pt 1");
 		ImagePlus imp;
 		FileOpener.setSilentMode(silentMode);
 		if (directory.length()>0 && !(directory.endsWith("/")||directory.endsWith("\\")))
@@ -246,16 +247,22 @@ public class Opener {
 		fileType = getFileType(path);
 		if (IJ.debugMode)
 			IJ.log("openImage: \""+types[fileType]+"\", "+path);
+		
+		System.out.println("Opener:openImage(str str):IP pt 2");
 		switch (fileType) {
 			case TIFF:
+				System.out.println("Opener:openImage(str str):IP pt 3");
 				imp = openTiff(directory, name);
+				System.out.println("Opener:openImage(str str):IP pt 4");
 				return imp;
 			case DICOM:
 				imp = (ImagePlus)IJ.runPlugIn("ij.plugin.DICOM", path);
 				if (imp.getWidth()!=0) return imp; else return null;
 			case TIFF_AND_DICOM:
 				// "hybrid" files created by GE-Senographe 2000 D */
+				System.out.println("Opener:openImage(str str):IP pt 5");
 				imp = openTiff(directory,name);
+				System.out.println("Opener:openImage(str str):IP pt 6");
 				ImagePlus imp2 = (ImagePlus)IJ.runPlugIn("ij.plugin.DICOM", path);
 				if (imp!=null && imp2!=null)	 {		
 					imp.setProperty("Info",imp2.getProperty("Info"));
@@ -305,14 +312,28 @@ public class Opener {
 		pgm, gif or jpeg. Displays a file open dialog if 'path' is null or
 		an empty string. Returns an ImagePlus object if successful. */
 	public ImagePlus openImage(String path) {
+		System.out.println("***Opener::openImage");
 		if (path==null || path.equals(""))
+		{
+			System.out.println("***Opener::openImage pt 1");
 			path = getPath();
-		if (path==null) return null;
+		}
+		if (path==null) 
+		{
+			System.out.println("***Opener::openImage pt 2");
+			return null;
+		}
 		ImagePlus img = null;
 		if (path.indexOf("://")>0)
+		{
+			System.out.println("***Opener::openImage pt 3: " + path);
 			img = openURL(path);
+		}
 		else
+		{
+			System.out.println("***Opener::openImage pt 4: " + path);
 			img = openImage(getDir(path), getName(path));
+		}
 		return img;
 	}
 	
@@ -408,10 +429,17 @@ public class Opener {
 			IJ.showStatus(""+url);
 			String lurl = url.toLowerCase(Locale.US);
 			ImagePlus imp = null;
+			
+			System.out.println("***openURL about to open the image");
+			
 			Configuration conf = new Configuration(); 
 			FileSystem fs =	FileSystem.get(conf); 
 			
+			System.out.println("***openURL about to open the image1: " + lurl);
+			
 			InputStream is = fs.open(new Path(lurl));
+			
+			System.out.println("***openURL about to open the image2");
 			
 			if (lurl.endsWith(".tif"))
 				imp = openTiff(is, name);
@@ -775,10 +803,20 @@ public class Opener {
 	/** Attempts to open the specified file as a tiff.
 		Returns an ImagePlus object if successful. */
 	public ImagePlus openTiff(String directory, String name) {
+		System.out.println("***Opener::openTiff (str str) pt 1");
 		TiffDecoder td = new TiffDecoder(directory, name);
+		System.out.println("***Opener::openTiff (str str) pt 2");
+		if(td == null)
+			System.out.println("***Opener::openTiff (str str) td null");
+		else
+			System.out.println("***Opener::openTiff (str str) td not null");
 		if (IJ.debugMode) td.enableDebugging();
 		FileInfo[] info=null;
-		try {info = td.getTiffInfo();}
+		try {
+			System.out.println("***Opener::openTiff (str str) pt 3");
+			info = td.getTiffInfo();
+			System.out.println("***Opener::openTiff (str str) pt 4");
+			}
 		catch (IOException e) {
 			String msg = e.getMessage();
 			if (msg==null||msg.equals("")) msg = ""+e;
@@ -787,6 +825,7 @@ public class Opener {
 		}
 		if (info==null)
 			return null;
+		System.out.println("***Opener::openTiff (str str) pt 5");
 		return openTiff2(info);
 	}
 	
@@ -826,15 +865,23 @@ public class Opener {
 	/** Attempts to open the specified inputStream as a
 		TIFF, returning an ImagePlus object if successful. */
 	public ImagePlus openTiff(InputStream in, String name) {
+		
+		System.out.println("***openTiff beginning");
 		FileInfo[] info = null;
 		try {
+			System.out.println("***openTiff pt1");
 			TiffDecoder td = new TiffDecoder(in, name);
+			System.out.println("***openTiff pt2");
+			if(td != null) System.out.println("***openTiff td not null");
+			else System.out.println("***openTiff td null");
 			if (IJ.debugMode) td.enableDebugging();
 			info = td.getTiffInfo();
 		} catch (FileNotFoundException e) {
+			System.out.println("***openTiff file not found");
 			IJ.error("TiffDecoder", "File not found: "+e.getMessage());
 			return null;
 		} catch (Exception e) {
+			System.out.println("***openTiff general exception");
 			IJ.error("TiffDecoder", ""+e);
 			return null;
 		}
@@ -942,23 +989,51 @@ public class Opener {
 	}
 
 	ImagePlus openTiff2(FileInfo[] info) {
+		System.out.println("***openTIff2");
+		
 		if (info==null)
+		{
+			System.out.println("***openTiff2 info was null");
 			return null;
+		}
+		else
+			System.out.println("***openTIff2 info was not null");
+		
 		ImagePlus imp = null;
 		if (IJ.debugMode) // dump tiff tags
 			IJ.log(info[0].debugInfo);
 		if (info.length>1) { // try to open as stack
+			System.out.println("***openTIff2 trying to open as stack");
 			imp = openTiffStack(info);
 			if (imp!=null)
 				return imp;
 		}
+		System.out.println("***openTIff2 pt 1");
 		FileOpener fo = new FileOpener(info[0]);
+		System.out.println("***openTIff2 pt 2");
 		imp = fo.open(false);
-		if (imp==null) return null;
+		System.out.println("***openTIff2 pt 3");
+		if (imp==null) 
+		{
+			System.out.println("***openTIff2 pt 4, imp null");
+			return null;
+		}
+		else
+		{
+			System.out.println("***openTIff2 pt 4, imp not null");
+		}
 		int[] offsets = info[0].stripOffsets;
 		if (offsets!=null&&offsets.length>1 && offsets[offsets.length-1]<offsets[0])
 			ij.IJ.run(imp, "Flip Vertically", "stack");
+		
+		System.out.println("***openTIff2 pt 5");
 		imp = makeComposite(imp, info[0]);
+		System.out.println("***openTIff2 pt 6");
+		
+		if(imp == null)
+			System.out.println("***openTIff2 pt 7 imp null");
+		else
+			System.out.println("***openTIff2 pt 7 imp not null");
 		return imp;
 	}
 	
@@ -996,16 +1071,31 @@ public class Opener {
 	'magic numbers' and the file name extension.
 	 */
 	public int getFileType(String path) {
+		System.out.println("Opener::getFileType pt 1");
+		
 		if (openUsingPlugins && !path.endsWith(".txt") &&  !path.endsWith(".java"))
 			return UNKNOWN;
-		File file = new File(path);
-		String name = file.getName();
+		
+		
+		//File file = new File(path);
+		//String name = file.getName();
+		//InputStream is;
+		
+		
 		InputStream is;
+		
 		byte[] buf = new byte[132];
 		try {
-			is = new FileInputStream(file);
+			System.out.println("Opener::getFileType pt 2");
+			Configuration conf = new Configuration(); 
+			FileSystem fs =	FileSystem.get(conf); 
+			System.out.println("Opener::getFileType pt 3");
+			is = fs.open(new Path(path));
+			System.out.println("Opener::getFileType pt 4");
 			is.read(buf, 0, 132);
+			System.out.println("Opener::getFileType pt 5");
 			is.close();
+			System.out.println("Opener::getFileType pt 6");
 		} catch (IOException e) {
 			return UNKNOWN;
 		}
@@ -1019,14 +1109,20 @@ public class Opener {
 			return TIFF_AND_DICOM;
 
 		 // Big-endian TIFF ("MM")
-		if (name.endsWith(".lsm"))
+		if (path.endsWith(".lsm"))
 				return UNKNOWN; // The LSM	Reader plugin opens these files
-		if (b0==73 && b1==73 && b2==42 && b3==0 && !(bioformats&&name.endsWith(".flex")))
+		if (b0==73 && b1==73 && b2==42 && b3==0 && !(bioformats&&path.endsWith(".flex")))
+		{
+			System.out.println("Opener::getFileType pt 7");
 			return TIFF;
+		}
 
 		 // Little-endian TIFF ("II")
 		if (b0==77 && b1==77 && b2==0 && b3==42)
+		{
+			System.out.println("Opener::getFileType pt 8");
 			return TIFF;
+		}
 
 		 // JPEG
 		if (b0==255 && b1==216 && b2==255)
@@ -1036,15 +1132,15 @@ public class Opener {
 		if (b0==71 && b1==73 && b2==70 && b3==56)
 			return GIF;
 
-		name = name.toLowerCase(Locale.US);
+		path = path.toLowerCase(Locale.US);
 
 		 // DICOM ("DICM" at offset 128)
-		if (buf[128]==68 && buf[129]==73 && buf[130]==67 && buf[131]==77 || name.endsWith(".dcm")) {
+		if (buf[128]==68 && buf[129]==73 && buf[130]==67 && buf[131]==77 || path.endsWith(".dcm")) {
 			return DICOM;
 		}
 
 		// ACR/NEMA with first tag = 00002,00xx or 00008,00xx
-		if ((b0==8||b0==2) && b1==0 && b3==0 && !name.endsWith(".spe") && !name.equals("fid"))	
+		if ((b0==8||b0==2) && b1==0 && b3==0 && !path.endsWith(".spe") && !path.equals("fid"))	
 				return DICOM;
 
 		// PGM ("P1", "P4", "P2", "P5", "P3" or "P6")
@@ -1052,7 +1148,7 @@ public class Opener {
 			return PGM;
 
 		// Lookup table
-		if (name.endsWith(".lut"))
+		if (path.endsWith(".lut"))
 			return LUT;
 		
 		// PNG
@@ -1060,15 +1156,15 @@ public class Opener {
 			return PNG;
 				
 		// ZIP containing a TIFF
-		if (name.endsWith(".zip"))
+		if (path.endsWith(".zip"))
 			return ZIP;
 
 		// FITS ("SIMP")
-		if ((b0==83 && b1==73 && b2==77 && b3==80) || name.endsWith(".fts.gz") || name.endsWith(".fits.gz"))
+		if ((b0==83 && b1==73 && b2==77 && b3==80) || path.endsWith(".fts.gz") || path.endsWith(".fits.gz"))
 			return FITS;
 			
 		// Java source file, text file or macro
-		if (name.endsWith(".java") || name.endsWith(".txt") || name.endsWith(".ijm") || name.endsWith(".js") || name.endsWith(".html"))
+		if (path.endsWith(".java") || path.endsWith(".txt") || path.endsWith(".ijm") || path.endsWith(".js") || path.endsWith(".html"))
 			return JAVA_OR_TEXT;
 
 		// ImageJ, NIH Image, Scion Image for Windows ROI
@@ -1076,15 +1172,15 @@ public class Opener {
 			return ROI;
 			
 		// ObjectJ project
-		if ((b0=='o' && b1=='j' && b2=='j' && b3==0) || name.endsWith(".ojj") )
+		if ((b0=='o' && b1=='j' && b2=='j' && b3==0) || path.endsWith(".ojj") )
 			return OJJ;
 
 		// Results table (tab-delimited or comma-separated tabular text)
-		if (name.endsWith(".xls") || name.endsWith(".csv")) 
+		if (path.endsWith(".xls") || path.endsWith(".csv")) 
 			return TABLE;
 
 		// AVI
-		if (name.endsWith(".avi"))
+		if (path.endsWith(".avi"))
 			return AVI;
 
 		// Text file
@@ -1100,7 +1196,7 @@ public class Opener {
 		   return TEXT;
 
 		// BMP ("BM")
-		if ((b0==66 && b1==77)||name.endsWith(".dib"))
+		if ((b0==66 && b1==77)||path.endsWith(".dib"))
 			return BMP;
 				
 		return UNKNOWN;

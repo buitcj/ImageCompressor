@@ -98,20 +98,23 @@ public class ImageConverter
 	}
 	public static boolean convertImageToJpeg(String s_input_path, String s_output_path)
 	{
-		System.out.println("Starting call to convertImageToJpeg");
+		System.out.println("***Starting call to convertImageToJpeg");
 		try
 		{
 			Path path = new Path(s_input_path);
 			Configuration conf = new Configuration();
 			FileSystem fs = FileSystem.get(conf);
+			
+			System.out.println("***pt1: " + path.toString());
 
 			if (fs.exists(path))
 			{
+				System.out.println("***pt2");
 				// CONVERT THE IMAGE HERE
 				
 				//open the image============================
 				
-				ImagePlus imp = IJ.openImage(path.toString());  
+				ImagePlus imp = IJ.openImage(path.toString());   // imp is a null ptr!
 				int bytes_per_pixel = imp.getBytesPerPixel();
 				int height = imp.getHeight();
 				int width = imp.getWidth();
@@ -126,7 +129,14 @@ public class ImageConverter
 				
 				// get the pixels===========================
 				
+				System.out.println("***pt3");
+				
 				ImageProcessor ip = imp.getProcessor();
+				
+				if(ip != null)
+					System.out.println("***imp not null");
+				else
+					System.out.println("***imp null");
 				
 				Object pixels = new Object();
 				
@@ -146,6 +156,8 @@ public class ImageConverter
 				// create the output========================
 				ImagePlus output_imp;
 				
+				System.out.println("***pt4");
+				
 				if(nChannels == 1)
 				{
 					// NOT SURE WHY THIS REQUIRES RGB
@@ -158,14 +170,26 @@ public class ImageConverter
 				else
 					return false;
 				
+				System.out.println("***pt5");
+				
 				output_imp.getProcessor().setPixels(pixels);
+				
+				System.out.println("***pt6");
 				
 				System.out.println("About to use filesaver to output the file");
 				FileSaver output_saver = new FileSaver(output_imp);
-				return output_saver.saveAsJpeg(s_output_path);
+				
+				System.out.println("***pt7");
+				
+				boolean ret_val = output_saver.saveAsJpeg(s_output_path);
+				
+				System.out.println("***pt8");
+				
+				return ret_val;
 			}
 			else
 			{
+				System.out.println("File did not exist on path: " + path.toString());
 				return false;
 			}
 		}

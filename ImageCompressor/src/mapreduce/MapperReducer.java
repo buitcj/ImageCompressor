@@ -82,6 +82,12 @@ public class MapperReducer
 				return;
 			}
 			
+			ImageConverter ic = new ImageConverter();
+			System.out.println("***Reducer's key: " + key.toString());
+			boolean worked = ic.convertImageToJpeg(key.toString(), "/user/jbu/output/blah.jpg");
+			
+			
+			/* code below sets up jna and then calls libmemfxns
 			if(parentDir != null) 
 			{ 
 				System.out.println("parentDir: " + parentDir.toString()); 
@@ -93,7 +99,7 @@ public class MapperReducer
 				Configuration conf = new Configuration(); 
 				FileSystem fs =	FileSystem.get(conf); 
 				
-				Path outFile = new Path("/user/bui/output/blah.jpg");
+				Path outFile = new Path("/user/jbu/output/blah.jpg");
 				if(!fs.exists(outFile)) 
 				{ 
 					FSDataOutputStream out = fs.create(outFile); 
@@ -105,6 +111,7 @@ public class MapperReducer
 			{
 				System.out.println("parent dir was null");
 			}
+			*/
 
 
 			/*
@@ -171,20 +178,10 @@ public class MapperReducer
 			FileInputFormat.addInputPath(job, new Path(args[0]));
 			FileOutputFormat.setOutputPath(job, new Path(args[1]));
 
-			if (fs.exists(new Path("/user/bui/lib/libmemfxns.so")))
-			{
-				System.out.println("/user/bui/lib/libmemfxns.so found in main");
-			}
-			else
-			{
-				System.out.println("/user/bui/lib/libmemfxns.so not found in main");
-				return;
-			}
-			
 			DistributedCache.addFileToClassPath(new Path(
-					"/user/bui/lib/jna.jar"), job.getConfiguration(), fs);
+					"/user/jbu/lib/jna.jar"), job.getConfiguration(), fs);
 			DistributedCache.addCacheFile(new Path(
-					"/user/bui/lib/libmemfxns.so").toUri(), job
+					"/user/jbu/lib/libmemfxns.so").toUri(), job
 					.getConfiguration());
 
 			System.out.println("***Waiting for job completion");

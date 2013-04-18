@@ -1520,6 +1520,7 @@ public class IJ {
 		Note that 'path' can also be a URL. Some reader plugins, including
 		the Bio-Formats plugin, display the image and return null. */
 	public static ImagePlus openImage(String path) {
+		System.out.println("***openImage starting");
 		return (new Opener()).openImage(path);
 	}
 

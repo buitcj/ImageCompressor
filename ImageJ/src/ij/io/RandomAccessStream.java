@@ -52,10 +52,13 @@ public final class RandomAccessStream extends InputStream {
     }
 
     public int read() throws IOException {
+	System.out.println("RandomAccessStream::read() pt 1");
     	if (ras!=null)
     		return ras.read();
         long l = pointer + 1L;
+	System.out.println("RandomAccessStream::read() pt 2 about to readUntil l: " + l + " length: " + length + " pointer: " + pointer);
         long l1 = readUntil(l);
+	System.out.println("RandomAccessStream::read() pt 3");
         if(l1 >= l) {
             byte abyte0[] = (byte[])data.elementAt((int)(pointer>>BLOCK_SHIFT));
             return abyte0[(int)(pointer++ & BLOCK_MASK)] & 0xff;
@@ -98,19 +101,25 @@ public final class RandomAccessStream extends InputStream {
     }
 
     private long readUntil(long l) throws IOException {
+	System.out.println("***RandomAccessStream::readUntil pt 1 l: " + l + " length: " + length);
         if(l<length)
             return l;
         if(foundEOS)
             return length;
         int i = (int)(l >> BLOCK_SHIFT);
         int j = length >> BLOCK_SHIFT;
+	System.out.println("***RandomAccessStream::readUntil pt 2 i: " + i + " j: " + j);
         for(int k = j; k <= i; k++) {
+	    System.out.println("***RandomAccessStream::readUntil pt 2.5");
             byte abyte0[] = new byte[BLOCK_SIZE];
             data.addElement(abyte0);
             int i1 = BLOCK_SIZE;
             int j1 = 0;
             while(i1 > 0) {
+		System.out.println("***RandomAccessStream::readUntil pt 3 " + j1 + " " + i1);
+		System.out.println("**src.available: " + src.available());
                 int k1 = src.read(abyte0, j1, i1);
+		System.out.println("***RandomAccessStream::readUntil pt 4");
                 if(k1 == -1) {
                     foundEOS = true;
                     return length;
@@ -132,7 +141,10 @@ public final class RandomAccessStream extends InputStream {
         if (loc<0L)
 			pointer = 0L;
         else
+	{
+	    System.out.println("RandomAccessStream::seek pointer got set to: " + loc);
             pointer = loc;
+	}
     }
 
     public void seek(int loc) throws IOException {
@@ -145,16 +157,24 @@ public final class RandomAccessStream extends InputStream {
         if (lloc<0L)
 			pointer = 0L;
         else
+	{
+	    System.out.println("RandomAccessStream::seek pointer got set to: " + lloc);
             pointer = lloc;
+	}
     }
 
     public final int readInt() throws IOException {
+	System.out.println("RandomAcessStream::readInt pt 1");
         int i = read();
+	System.out.println("RandomAcessStream::readInt pt 2");
         int j = read();
         int k = read();
         int l = read();
         if((i | j | k | l) < 0)
+	{
+	    System.out.println("RandomAcessStream::readInt got EOF");
             throw new EOFException();
+	}
         else
             return (i << 24) + (j << 16) + (k << 8) + l;
     }
