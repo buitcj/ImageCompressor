@@ -65,7 +65,7 @@ public class MapperReducer
 						Path localFile = localFiles[i]; 
 						System.out.println("***local file: " + localFile);
 						
-						if(localFile.toString().endsWith("libmemfxns.so"))
+						if(localFile.toString().endsWith("libjpegcompressor.so"))
 						{
 							parentDir = localFile.getParent();
 							context.write(new Text(parentDir.toString()), new IntWritable(99));
@@ -84,10 +84,12 @@ public class MapperReducer
 			
 			ImageConverter ic = new ImageConverter();
 			System.out.println("***Reducer's key: " + key.toString());
-			boolean worked = ic.convertImageToJpeg(key.toString(), "/user/jbu/output/blah.jpg");
 			
+			System.out.println("about to convert image to jpeg");
+			//boolean worked = ic.convertImageToJpeg(key.toString(), "/user/jbu/output/blah.jpg");
+			System.out.println("done converting image to jpeg");
 			
-			/* code below sets up jna and then calls libmemfxns
+			/* code below sets up jna and then calls libmemfxns */
 			if(parentDir != null) 
 			{ 
 				System.out.println("parentDir: " + parentDir.toString()); 
@@ -95,7 +97,20 @@ public class MapperReducer
 				
 				context.write(new Text("got here1"), new IntWritable(66));
 				
-				byte[] buf = JnaTest.getBuf();
+				int h = 200; 
+				int w = 200;
+				byte[] in_buf = new byte[h*w];
+				int z = 0;
+				for(int j = 0; j < h; j++)
+				{
+					for(int i = 0; i < w; i++)
+					{
+						in_buf[z++] = (byte) (z % 255);
+					}
+				}
+				
+				byte[] out_buf = JnaInterface.getCompressedBytes(in_buf, h, w, parentDir.toString() + "/" + "libjpegcompressor.so");
+				
 				Configuration conf = new Configuration(); 
 				FileSystem fs =	FileSystem.get(conf); 
 				
@@ -103,7 +118,7 @@ public class MapperReducer
 				if(!fs.exists(outFile)) 
 				{ 
 					FSDataOutputStream out = fs.create(outFile); 
-					out.write(buf, 0, buf.length); 
+					out.write(out_buf, 0, out_buf.length); 
 					out.close();
 				}
 			}
@@ -111,8 +126,6 @@ public class MapperReducer
 			{
 				System.out.println("parent dir was null");
 			}
-			*/
-
 
 			/*
 			 * Code below attempts to compress an entire image to jpeg boolean
@@ -181,7 +194,7 @@ public class MapperReducer
 			DistributedCache.addFileToClassPath(new Path(
 					"/user/jbu/lib/jna.jar"), job.getConfiguration(), fs);
 			DistributedCache.addCacheFile(new Path(
-					"/user/jbu/lib/libmemfxns.so").toUri(), job
+					"/user/jbu/lib/libjpegcompressor.so").toUri(), job
 					.getConfiguration());
 
 			System.out.println("***Waiting for job completion");

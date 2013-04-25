@@ -1,5 +1,5 @@
 all:
-	g++ ./prog.cpp -o ./prog -I/home/jbu/Dropbox/research/workspace/testjna/so/include -I${JPEG_LIB_DIR}/include -L/home/jbu/Dropbox/research/workspace/testjna/so/lib -L${JPEG_LIB_DIR} -lmemfxns -ljpeg
+	g++ ./prog.cpp -o ./prog -I/home/jbu/Dropbox/research/workspace/JpegCompressor/include -L${JPEG_COMPRESSOR_PATH} -L${JPEG_LIB_DIR} -ljpegcompressor -ljpeg
 
 clean:
 	rm ./prog

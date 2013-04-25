@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "memfxns.h"
+#include "JpegCompressor.h"
 #include "jpeglib.h"
 #include <stdio.h>
 #include <iostream>

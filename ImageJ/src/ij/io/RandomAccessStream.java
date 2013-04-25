@@ -101,25 +101,19 @@ public final class RandomAccessStream extends InputStream {
     }
 
     private long readUntil(long l) throws IOException {
-	System.out.println("***RandomAccessStream::readUntil pt 1 l: " + l + " length: " + length);
         if(l<length)
             return l;
         if(foundEOS)
             return length;
         int i = (int)(l >> BLOCK_SHIFT);
         int j = length >> BLOCK_SHIFT;
-	System.out.println("***RandomAccessStream::readUntil pt 2 i: " + i + " j: " + j);
         for(int k = j; k <= i; k++) {
-	    System.out.println("***RandomAccessStream::readUntil pt 2.5");
             byte abyte0[] = new byte[BLOCK_SIZE];
             data.addElement(abyte0);
             int i1 = BLOCK_SIZE;
             int j1 = 0;
             while(i1 > 0) {
-		System.out.println("***RandomAccessStream::readUntil pt 3 " + j1 + " " + i1);
-		System.out.println("**src.available: " + src.available());
                 int k1 = src.read(abyte0, j1, i1);
-		System.out.println("***RandomAccessStream::readUntil pt 4");
                 if(k1 == -1) {
                     foundEOS = true;
                     return length;
