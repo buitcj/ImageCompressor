@@ -24,5 +24,5 @@ public interface JpegCompressionLibrary extends Library
 	// unsigned char** out_buf, unsigned long* size)
 	int getCompressedBytes(Pointer in_buf, int in_h, int in_w, Pointer out_buf, Pointer size);
 	
-	void releaseBuf(Pointer ptr);
+	void releaseMemory(Pointer ptr);
 }

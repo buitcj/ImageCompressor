@@ -111,13 +111,17 @@ public class MapperReducer
 				
 				byte[] out_buf = JnaInterface.getCompressedBytes(in_buf, h, w, parentDir.toString() + "/" + "libjpegcompressor.so");
 				
+                System.out.println("***got compressed bytes");
+
 				Configuration conf = new Configuration(); 
 				FileSystem fs =	FileSystem.get(conf); 
 				
 				Path outFile = new Path("/user/jbu/output/blah.jpg");
 				if(!fs.exists(outFile)) 
 				{ 
+                    System.out.println("***About to create the file");
 					FSDataOutputStream out = fs.create(outFile); 
+                    System.out.println("***Done creating the file");
 					out.write(out_buf, 0, out_buf.length); 
 					out.close();
 				}

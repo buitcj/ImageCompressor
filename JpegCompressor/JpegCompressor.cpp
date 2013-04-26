@@ -7,14 +7,16 @@
 using namespace std;
 
 
-int getCompressedBytes(unsigned char* in_buf, int in_h, int in_w, unsigned char** out_buf, unsigned long* size)
+int getCompressedBytes(unsigned char* in_buf, int in_h, int in_w, unsigned char** out_buf, unsigned long* out_size)
 {
  	struct jpeg_compress_struct cinfo;
-        struct jpeg_error_mgr jerr;
-        cinfo.err = jpeg_std_error(&jerr);
-        jpeg_create_compress(&cinfo);
+    struct jpeg_error_mgr jerr;
+    cinfo.err = jpeg_std_error(&jerr);
+    jpeg_create_compress(&cinfo);
 
-	jpeg_mem_dest(&cinfo, out_buf, size);
+    unsigned long size = 0;
+
+	jpeg_mem_dest(&cinfo, out_buf, &size);
 
 	cinfo.image_width = in_w;
 	cinfo.image_height = in_h;
@@ -35,6 +37,8 @@ int getCompressedBytes(unsigned char* in_buf, int in_h, int in_w, unsigned char*
 	}
 
 	jpeg_finish_compress(&cinfo);
+    *out_size = size;
+
 	jpeg_destroy_compress(&cinfo);
 
 	return 0;
