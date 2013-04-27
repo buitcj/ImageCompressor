@@ -83,7 +83,36 @@ public class ImageConverter {
 		}
 	}
 
-	public static ImageBundle readPixels(String s_input_path) {
+    public static ImageBundle getImageInfo(String s_input_path) {
+		try {
+			Path path = new Path(s_input_path);
+			Configuration conf = new Configuration();
+			FileSystem fs = FileSystem.get(conf);
+
+			// CONVERT THE IMAGE HERE
+
+			// open the image============================
+
+			ImagePlus imp = IJ.openImage(path.toString());
+
+			if (imp == null) {
+				System.out.println("imp was null");
+				return null;
+			}
+
+            ImageBundle ib = new ImageBundle();
+            ib.height = imp.getHeight();
+            ib.width = imp.getWidth();
+            return ib;
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+	public static ImageBundle readPixels(String s_input_path, int idx_x, int idx_y) {
 		try {
 			Path path = new Path(s_input_path);
 			Configuration conf = new Configuration();
@@ -121,7 +150,7 @@ public class ImageConverter {
 				return null;
 			}
 
-			ip.setRoi(0, 0, 500, 500);
+			ip.setRoi(idx_x * 500, idx_y * 500, 500, 500);
 
 			ImageProcessor secondIp = ip.crop();
 
@@ -134,8 +163,17 @@ public class ImageConverter {
 			ib.bytesPerPixel = bytes_per_pixel;
 			ib.numChannels = nChannels;
 			ib.pixels = secondIp.getPixelsCopy();
+            
 			ib.height = 500; //height;
 			ib.width = 500; //width;
+            if(idx_x * 500 + 500 > width)
+            {
+                ib.width = width - (idx_x * 500);
+            }
+            if(idx_y * 500 + 500 > height)
+            {
+                ib.height = height - (idx_y * 500);
+            }
 
 			if (ib.pixels == null) {
 				System.out.println("pixels was null");

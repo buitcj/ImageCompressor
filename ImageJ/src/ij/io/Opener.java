@@ -312,26 +312,21 @@ public class Opener {
 		pgm, gif or jpeg. Displays a file open dialog if 'path' is null or
 		an empty string. Returns an ImagePlus object if successful. */
 	public ImagePlus openImage(String path) {
-		System.out.println("***Opener::openImage");
 		if (path==null || path.equals(""))
 		{
-			System.out.println("***Opener::openImage pt 1");
 			path = getPath();
 		}
 		if (path==null) 
 		{
-			System.out.println("***Opener::openImage pt 2");
 			return null;
 		}
 		ImagePlus img = null;
 		if (path.indexOf("://")>0)
 		{
-			System.out.println("***Opener::openImage pt 3: " + path);
 			img = openURL(path);
 		}
 		else
 		{
-			System.out.println("***Opener::openImage pt 4: " + path);
 			img = openImage(getDir(path), getName(path));
 		}
 		return img;
@@ -430,16 +425,10 @@ public class Opener {
 			String lurl = url.toLowerCase(Locale.US);
 			ImagePlus imp = null;
 			
-			System.out.println("***openURL about to open the image");
-			
 			Configuration conf = new Configuration(); 
 			FileSystem fs =	FileSystem.get(conf); 
 			
-			System.out.println("***openURL about to open the image1: " + lurl);
-			
 			InputStream is = fs.open(new Path(lurl));
-			
-			System.out.println("***openURL about to open the image2");
 			
 			if (lurl.endsWith(".tif"))
 				imp = openTiff(is, name);
@@ -803,19 +792,11 @@ public class Opener {
 	/** Attempts to open the specified file as a tiff.
 		Returns an ImagePlus object if successful. */
 	public ImagePlus openTiff(String directory, String name) {
-		System.out.println("***Opener::openTiff (str str) pt 1");
 		TiffDecoder td = new TiffDecoder(directory, name);
-		System.out.println("***Opener::openTiff (str str) pt 2");
-		if(td == null)
-			System.out.println("***Opener::openTiff (str str) td null");
-		else
-			System.out.println("***Opener::openTiff (str str) td not null");
 		if (IJ.debugMode) td.enableDebugging();
 		FileInfo[] info=null;
 		try {
-			System.out.println("***Opener::openTiff (str str) pt 3");
 			info = td.getTiffInfo();
-			System.out.println("***Opener::openTiff (str str) pt 4");
 			}
 		catch (IOException e) {
 			String msg = e.getMessage();
@@ -825,7 +806,6 @@ public class Opener {
 		}
 		if (info==null)
 			return null;
-		System.out.println("***Opener::openTiff (str str) pt 5");
 		return openTiff2(info);
 	}
 	
@@ -866,22 +846,15 @@ public class Opener {
 		TIFF, returning an ImagePlus object if successful. */
 	public ImagePlus openTiff(InputStream in, String name) {
 		
-		System.out.println("***openTiff beginning");
 		FileInfo[] info = null;
 		try {
-			System.out.println("***openTiff pt1");
 			TiffDecoder td = new TiffDecoder(in, name);
-			System.out.println("***openTiff pt2");
-			if(td != null) System.out.println("***openTiff td not null");
-			else System.out.println("***openTiff td null");
 			if (IJ.debugMode) td.enableDebugging();
 			info = td.getTiffInfo();
 		} catch (FileNotFoundException e) {
-			System.out.println("***openTiff file not found");
 			IJ.error("TiffDecoder", "File not found: "+e.getMessage());
 			return null;
 		} catch (Exception e) {
-			System.out.println("***openTiff general exception");
 			IJ.error("TiffDecoder", ""+e);
 			return null;
 		}
@@ -989,51 +962,30 @@ public class Opener {
 	}
 
 	ImagePlus openTiff2(FileInfo[] info) {
-		System.out.println("***openTIff2");
-		
 		if (info==null)
 		{
-			System.out.println("***openTiff2 info was null");
 			return null;
 		}
-		else
-			System.out.println("***openTIff2 info was not null");
-		
 		ImagePlus imp = null;
 		if (IJ.debugMode) // dump tiff tags
 			IJ.log(info[0].debugInfo);
 		if (info.length>1) { // try to open as stack
-			System.out.println("***openTIff2 trying to open as stack");
 			imp = openTiffStack(info);
 			if (imp!=null)
 				return imp;
 		}
-		System.out.println("***openTIff2 pt 1");
 		FileOpener fo = new FileOpener(info[0]);
-		System.out.println("***openTIff2 pt 2");
 		imp = fo.open(false);
-		System.out.println("***openTIff2 pt 3");
 		if (imp==null) 
 		{
-			System.out.println("***openTIff2 pt 4, imp null");
 			return null;
-		}
-		else
-		{
-			System.out.println("***openTIff2 pt 4, imp not null");
 		}
 		int[] offsets = info[0].stripOffsets;
 		if (offsets!=null&&offsets.length>1 && offsets[offsets.length-1]<offsets[0])
 			ij.IJ.run(imp, "Flip Vertically", "stack");
 		
-		System.out.println("***openTIff2 pt 5");
 		imp = makeComposite(imp, info[0]);
-		System.out.println("***openTIff2 pt 6");
 		
-		if(imp == null)
-			System.out.println("***openTIff2 pt 7 imp null");
-		else
-			System.out.println("***openTIff2 pt 7 imp not null");
 		return imp;
 	}
 	

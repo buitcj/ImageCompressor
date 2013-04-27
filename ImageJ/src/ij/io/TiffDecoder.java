@@ -362,36 +362,26 @@ public class TiffDecoder {
 	}
 	
 	FileInfo OpenIFD() throws IOException {
-		System.out.println("***TiffDecoder::OpenIFD pt 1");
 	// Get Image File Directory data
 		int tag, fieldType, count, value;
-		System.out.println("***TiffDecoder::OpenIFD pt 1.1");
 		int nEntries = getShort();
-		System.out.println("***TiffDecoder::OpenIFD pt 1.2");
 		if (nEntries<1 || nEntries>1000)
 		{
-			System.out.println("***TiffDecoder::OpenIFD pt 1.3");
 			return null;
 		}
 		ifdCount++;
 		if ((ifdCount%50)==0 && ifdCount>0)
 			ij.IJ.showStatus("Opening IFDs: "+ifdCount);
 		
-		System.out.println("***TiffDecoder::OpenIFD pt 2");
-		
 		FileInfo fi = new FileInfo();
-		
-		System.out.println("***TiffDecoder::OpenIFD pt 3");
 		
 		for (int i=0; i<nEntries; i++) {
 			
-			System.out.println("***TiffDecoder::OpenIFD pt 4 : " + i);
 			tag = getShort();
 			fieldType = getShort();
 			count = getInt();
 			value = getValue(fieldType, count);
 			
-			System.out.println("***TiffDecoder::OpenIFD pt 5");
 			
 			long lvalue = ((long)value)&0xffffffffL;
 			if (debugMode && ifdCount<10) dumpTag(tag, count, value, fi);
@@ -594,11 +584,8 @@ public class TiffDecoder {
 					if (tag>10000 && tag<32768 && ifdCount>1)
 						return null;
 			}
-			
-			System.out.println("***TiffDecoder::OpenIFD pt 7");
 		}
 		
-		System.out.println("***TiffDecoder::OpenIFD pt 8");
 		fi.fileFormat = fi.TIFF;
 		fi.fileName = name;
 		fi.directory = directory;
@@ -779,43 +766,25 @@ public class TiffDecoder {
 			Configuration conf = new Configuration(); 
 			FileSystem fs =	FileSystem.get(conf); 
 			
-			System.out.println("***getTiffInfo about to open the image1: " + directory + name);
-			
 			InputStream is = fs.open(new Path(directory + name));
-			
-			System.out.println("***getTiffInfo is.available(): " + is.available());
-			
-			System.out.println("***getTiffInfo about to open the image1 pt 1");
 			
 			in = new RandomAccessStream(is);
 			
-			System.out.println("***getTiffInfo in.available(): " + in.available());
-			
-			System.out.println("***getTiffInfo about to open the image1 pt 2");
 			//in = new RandomAccessStream(new RandomAccessFile(new File(directory, name), "r"));
 		}
 		info = new Vector();
 		
-		System.out.println("***getTiffInfo about to open the image1 pt 3");
-		
 		ifdOffset = OpenImageFileHeader();
 		
-		System.out.println("***getTiffInfo about to open the image1 pt 4");
-		
 		if (ifdOffset<0L) {
-			System.out.println("***getTiffInfo about to open the image1 pt 5");
 			in.close();
 			return null;
 		}
 		if (debugMode) dInfo = "\n  " + name + ": opening\n";
 		
-		System.out.println("***getTiffInfo about to open the image1 pt 6");
 		while (ifdOffset>0L) {
-			System.out.println("***getTiffInfo about to open the image1 pt 6.1");
 			in.seek(ifdOffset);
-			System.out.println("***getTiffInfo about to open the image1 pt 6.2");
 			FileInfo fi = OpenIFD();
-			System.out.println("***getTiffInfo about to open the image1 pt 6.3");
 			if (fi!=null) {
 				info.addElement(fi);
 				ifdOffset = ((long)getInt())&0xffffffffL;
@@ -827,7 +796,6 @@ public class TiffDecoder {
 					ifdOffset = 0L;
 			}
 		}
-		System.out.println("***getTiffInfo about to open the image1 pt 7");
 		if (info.size()==0) {
 			in.close();
 			return null;

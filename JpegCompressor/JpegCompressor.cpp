@@ -46,8 +46,6 @@ int getCompressedBytes(unsigned char* in_buf, int in_h, int in_w, int num_channe
 
 	while(cinfo.next_scanline < cinfo.image_height)
 	{
-        cout << "clib pt 4" << endl;
-        
 		row_pointer[0] = &in_buf[cinfo.next_scanline * row_stride];
 		jpeg_write_scanlines(&cinfo, row_pointer, 1);
 	}

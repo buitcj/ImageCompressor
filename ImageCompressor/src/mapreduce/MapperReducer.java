@@ -80,64 +80,81 @@ public class MapperReducer
 				System.out.println("***localFiles was null!");
 				return;
 			}
-			
-			ImageConverter ic = new ImageConverter();
-			System.out.println("***Reducer's key: " + key.toString());
-			
-			ImageBundle ib = ic.readPixels(key.toString());
 
-			if(ib == null || ib.pixels == null)
-			{
-				System.out.println("srcBytes was null");
-				return;
-			}
+            int lastIndexOfSlash = key.toString().lastIndexOf("/");
+            String fileName = key.toString().substring(lastIndexOfSlash + 1);
 
-			System.out.println("starting buffer rewrite code");
-			
-			byte[] inBytes = null;
-			int actualNumChannels = 1;
-			if(ib.numChannels == 1 && ib.bytesPerPixel == 4)
-			{
-				actualNumChannels = 3;
-				
-				// need to convert
-				int size = ib.width * ib.height * 3;
-				inBytes = new byte[size]; // 3 for RGB
-				System.out.println("inBytes size: " + size);
-				int srcBytes_counter = 0;
-				int inBytes_counter = 0;
-				int[] pixels = (int[]) ib.pixels;
-				for(int y = 0; y < ib.height; y++)
-				{
-					for(int x = 0; x < ib.width; x++)
-					{
-						int pixel = pixels[srcBytes_counter++];
-						inBytes[inBytes_counter] = (byte)((pixel&0xff0000)>>16);
-						inBytes[inBytes_counter+1] = (byte)((pixel&0xff00)>>8);
-						inBytes[inBytes_counter+2] = (byte)(pixel&0xff);
-						inBytes_counter+=3;
-					}
-				}
-			}
-			
-			System.out.println("done with buffer rewrite code");
-			
-			/* code below sets up jna and then calls libmemfxns */
+            ImageBundle metadata = ImageConverter.getImageInfo(key.toString());
+            if(metadata == null)
+            {
+                return;
+            }
+
             System.setProperty("jna.library.path", jpegLibPath); 
-            
-            byte[] out_buf = JnaInterface.getCompressedBytes(inBytes, ib.height, ib.width, actualNumChannels, jpegLibPath);
-            
-            System.out.println("***got compressed bytes");
 
-            Configuration conf = new Configuration(); 
-            FileSystem fs =	FileSystem.get(conf); 
+            final int BLOCK_SIZE = 500;
             
-            Path outFile = new Path("/user/jbu/output/blah.jpg");
-            if(!fs.exists(outFile)) 
-            { 
-                FSDataOutputStream out = fs.create(outFile); 
-                out.write(out_buf, 0, out_buf.length); 
-                out.close();
+            for(int y = 0; y < metadata.height; y += BLOCK_SIZE)
+            {
+                for(int x = 0; x < metadata.width; x += BLOCK_SIZE)
+                {
+                    System.out.println("x: " + x + " y: " + y);
+
+                    // read pixels
+                    ImageBundle ib = ImageConverter.readPixels(key.toString(), x / BLOCK_SIZE, y / BLOCK_SIZE);
+
+                    if(ib == null || ib.pixels == null)
+                    {
+                        System.out.println("srcBytes was null");
+                        return;
+                    }
+
+                    System.out.println("starting buffer rewrite code");
+                    
+                    byte[] inBytes = null;
+                    int actualNumChannels = 1;
+                    if(ib.numChannels == 1 && ib.bytesPerPixel == 4)
+                    {
+                        actualNumChannels = 3;
+                        
+                        // need to convert
+                        int size = ib.width * ib.height * 3;
+                        inBytes = new byte[size]; // 3 for RGB
+                        System.out.println("inBytes size: " + size);
+                        int srcBytes_counter = 0;
+                        int inBytes_counter = 0;
+                        int[] pixels = (int[]) ib.pixels;
+                        for(int iy = 0; iy < ib.height; iy++)
+                        {
+                            for(int ix = 0; ix < ib.width; ix++)
+                            {
+                                int pixel = pixels[srcBytes_counter++];
+                                inBytes[inBytes_counter] = (byte)((pixel&0xff0000)>>16);
+                                inBytes[inBytes_counter+1] = (byte)((pixel&0xff00)>>8);
+                                inBytes[inBytes_counter+2] = (byte)(pixel&0xff);
+                                inBytes_counter+=3;
+                            }
+                        }
+                    }
+
+                    // compress
+                    byte[] out_buf = JnaInterface.getCompressedBytes(inBytes, ib.height, ib.width, actualNumChannels, jpegLibPath);
+                    System.out.println("***got compressed bytes");
+
+                    // write pixels
+                    Configuration conf = new Configuration(); 
+                    FileSystem fs =	FileSystem.get(conf); 
+
+                    final String basePath = "/user/jbu/output/" + fileName;
+                    Path outFile = new Path(basePath + "-" + (new Integer(x)).toString() + "_" + (new Integer(y)).toString());  
+
+                    if(!fs.exists(outFile)) 
+                    { 
+                        FSDataOutputStream out = fs.create(outFile); 
+                        out.write(out_buf, 0, out_buf.length); 
+                        out.close();
+                    }
+                }
             }
 		}
 	}
