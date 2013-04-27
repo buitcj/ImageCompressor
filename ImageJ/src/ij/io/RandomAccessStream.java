@@ -52,13 +52,13 @@ public final class RandomAccessStream extends InputStream {
     }
 
     public int read() throws IOException {
-	System.out.println("RandomAccessStream::read() pt 1");
+	//System.out.println("RandomAccessStream::read() pt 1");
     	if (ras!=null)
     		return ras.read();
         long l = pointer + 1L;
-	System.out.println("RandomAccessStream::read() pt 2 about to readUntil l: " + l + " length: " + length + " pointer: " + pointer);
+	//System.out.println("RandomAccessStream::read() pt 2 about to readUntil l: " + l + " length: " + length + " pointer: " + pointer);
         long l1 = readUntil(l);
-	System.out.println("RandomAccessStream::read() pt 3");
+	//System.out.println("RandomAccessStream::read() pt 3");
         if(l1 >= l) {
             byte abyte0[] = (byte[])data.elementAt((int)(pointer>>BLOCK_SHIFT));
             return abyte0[(int)(pointer++ & BLOCK_MASK)] & 0xff;

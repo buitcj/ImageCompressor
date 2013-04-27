@@ -22,10 +22,10 @@ public class JnaInterface
 		byte[] in_buf = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 		int h = 1; 
 		int w = 10;
-		JnaInterface.getCompressedBytes(in_buf, h, w, path);
+		JnaInterface.getCompressedBytes(in_buf, h, w, 1, path);
 	}
 	
-	public static byte[] getCompressedBytes(byte[] in_buf, int h, int w, String libPath)
+	public static byte[] getCompressedBytes(byte[] in_buf, int h, int w, int num_channels, String libPath)
 	{
 		//int getCompressedBytes(unsigned char* in_buf, int in_h, int in_w, 
 		//unsigned char** out_buf, unsigned long* size)
@@ -37,7 +37,7 @@ public class JnaInterface
 		System.out.println("1");
 		
 		// INPUTS
-		Pointer in_buf_p = new Memory(h * w);
+		Pointer in_buf_p = new Memory(h * w * num_channels);
 		in_buf_p.write(0, in_buf, 0, in_buf.length);
 		
 		System.out.println("2");
@@ -53,7 +53,9 @@ public class JnaInterface
 		
 		System.out.println("3");
 		
-		jcl.getCompressedBytes(in_buf_p, h, w, out_buf_ptr_ptr, length_ptr);
+		System.out.println("inbuf len: " + in_buf.length + " h: " + h + " w: " + w + " num_channels: " + num_channels);
+		
+		jcl.getCompressedBytes(in_buf_p, h, w, num_channels, out_buf_ptr_ptr, length_ptr);
 		
 		System.out.println("4");
 		

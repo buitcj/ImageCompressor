@@ -7,7 +7,7 @@
 using namespace std;
 
 
-int getCompressedBytes(unsigned char* in_buf, int in_h, int in_w, unsigned char** out_buf, unsigned long* out_size)
+int getCompressedBytes(unsigned char* in_buf, int in_h, int in_w, int num_channels, unsigned char** out_buf, unsigned long* out_size)
 {
  	struct jpeg_compress_struct cinfo;
     struct jpeg_error_mgr jerr;
@@ -20,26 +20,47 @@ int getCompressedBytes(unsigned char* in_buf, int in_h, int in_w, unsigned char*
 
 	cinfo.image_width = in_w;
 	cinfo.image_height = in_h;
-	cinfo.input_components = 1;
-	cinfo.in_color_space = JCS_GRAYSCALE;
+    if(num_channels == 1)
+    {
+        cout << "GRAYSCALE DETECTED" << endl;
+	    cinfo.input_components = 1;
+	    cinfo.in_color_space = JCS_GRAYSCALE;
+    }
+    else if(num_channels == 3)
+    {
+        cout << "RGB DETECTED" << endl;
+	    cinfo.input_components = 3;
+        cinfo.in_color_space = JCS_RGB;
+    }
+
+    cout << "clib pt 1" << endl;
 
 	jpeg_set_defaults(&cinfo);
+    cout << "clib pt 2" << endl;
 
 	jpeg_start_compress(&cinfo, TRUE);
+    cout << "clib pt 3" << endl;
 
 	JSAMPROW row_pointer[1];
-	int row_stride = cinfo.image_width;
+	int row_stride = cinfo.image_width * num_channels;
 
 	while(cinfo.next_scanline < cinfo.image_height)
 	{
+        cout << "clib pt 4" << endl;
+        
 		row_pointer[0] = &in_buf[cinfo.next_scanline * row_stride];
 		jpeg_write_scanlines(&cinfo, row_pointer, 1);
 	}
+    cout << "clib pt 5" << endl;
 
 	jpeg_finish_compress(&cinfo);
     *out_size = size;
 
+    
+    cout << "clib pt 6" << endl;
+
 	jpeg_destroy_compress(&cinfo);
+    cout << "clib pt 7" << endl;
 
 	return 0;
 }

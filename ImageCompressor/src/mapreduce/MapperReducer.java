@@ -54,7 +54,7 @@ public class MapperReducer
 			localFiles = DistributedCache.getLocalCacheFiles(context
 					.getConfiguration());
 
-			Path parentDir = null;
+            String jpegLibPath = "";
 			if (null != localFiles)
 			{
 				System.out.println("***localFiles.length: " + localFiles.length);
@@ -67,8 +67,7 @@ public class MapperReducer
 						
 						if(localFile.toString().endsWith("libjpegcompressor.so"))
 						{
-							parentDir = localFile.getParent();
-							context.write(new Text(parentDir.toString()), new IntWritable(99));
+                            jpegLibPath = localFile.toString(); 
 						}
 						
 						IntWritable idx = new IntWritable(i);
@@ -85,90 +84,61 @@ public class MapperReducer
 			ImageConverter ic = new ImageConverter();
 			System.out.println("***Reducer's key: " + key.toString());
 			
-			System.out.println("about to convert image to jpeg");
-			//boolean worked = ic.convertImageToJpeg(key.toString(), "/user/jbu/output/blah.jpg");
-			System.out.println("done converting image to jpeg");
+			ImageBundle ib = ic.readPixels(key.toString());
+
+			if(ib == null || ib.pixels == null)
+			{
+				System.out.println("srcBytes was null");
+				return;
+			}
+
+			System.out.println("starting buffer rewrite code");
 			
-			/* code below sets up jna and then calls libmemfxns */
-			if(parentDir != null) 
-			{ 
-				System.out.println("parentDir: " + parentDir.toString()); 
-				System.setProperty("jna.library.path", parentDir.toString()); 
+			byte[] inBytes = null;
+			int actualNumChannels = 1;
+			if(ib.numChannels == 1 && ib.bytesPerPixel == 4)
+			{
+				actualNumChannels = 3;
 				
-				context.write(new Text("got here1"), new IntWritable(66));
-				
-				int h = 200; 
-				int w = 200;
-				byte[] in_buf = new byte[h*w];
-				int z = 0;
-				for(int j = 0; j < h; j++)
+				// need to convert
+				int size = ib.width * ib.height * 3;
+				inBytes = new byte[size]; // 3 for RGB
+				System.out.println("inBytes size: " + size);
+				int srcBytes_counter = 0;
+				int inBytes_counter = 0;
+				int[] pixels = (int[]) ib.pixels;
+				for(int y = 0; y < ib.height; y++)
 				{
-					for(int i = 0; i < w; i++)
+					for(int x = 0; x < ib.width; x++)
 					{
-						in_buf[z++] = (byte) (z % 255);
+						int pixel = pixels[srcBytes_counter++];
+						inBytes[inBytes_counter] = (byte)((pixel&0xff0000)>>16);
+						inBytes[inBytes_counter+1] = (byte)((pixel&0xff00)>>8);
+						inBytes[inBytes_counter+2] = (byte)(pixel&0xff);
+						inBytes_counter+=3;
 					}
 				}
-				
-				byte[] out_buf = JnaInterface.getCompressedBytes(in_buf, h, w, parentDir.toString() + "/" + "libjpegcompressor.so");
-				
-                System.out.println("***got compressed bytes");
-
-				Configuration conf = new Configuration(); 
-				FileSystem fs =	FileSystem.get(conf); 
-				
-				Path outFile = new Path("/user/jbu/output/blah.jpg");
-				if(!fs.exists(outFile)) 
-				{ 
-                    System.out.println("***About to create the file");
-					FSDataOutputStream out = fs.create(outFile); 
-                    System.out.println("***Done creating the file");
-					out.write(out_buf, 0, out_buf.length); 
-					out.close();
-				}
 			}
-			else
-			{
-				System.out.println("parent dir was null");
-			}
-
-			/*
-			 * Code below attempts to compress an entire image to jpeg boolean
-			 * success =
-			 * ImageConverter.convertImageToJpeg(localFiles[0].toString(),
-			 * "/user/bui/output/" + fileName + ".jpg");
-			 * 
-			 * if(success) System.out.println("convertImageToJpeg succeeded");
-			 * else System.out.println("convertImageToJpeg failed");
-			 */
-
 			
-			/* THIS CODE CREATES A BUFFER AND WRITES A FILE TO HDFS WITH THE BUFFER
-			 * 
-			 * Configuration conf = new Configuration(); FileSystem fs =
-			 * FileSystem.get(conf); byte[] buf = {0, 1, 2, 3, 4};
-			 * 
-			 * Path outFile = new Path("/user/bui/output/blah.jpg");
-			 * if(!fs.exists(outFile)) { FSDataOutputStream out =
-			 * fs.create(outFile); out.write(buf, 0, buf.length); out.close(); }
-			 */
-
-			/*
-			 * This code appears to create files in the paths that are passed in
-			 * as input
-			 * 
-			 * Configuration conf = new Configuration(); FileSystem fs =
-			 * FileSystem.get(conf); byte[] buf = {0, 1, 2, 3, 4};
-			 * 
-			 * while (values.iterator().hasNext()) { IntWritable value =
-			 * values.iterator().next(); context.write(key, value);
-			 * System.out.println("Writing: " + key + " " + value);
-			 * 
-			 * Path outFile = new Path(key.toString()); if(!fs.exists(outFile))
-			 * { FSDataOutputStream out = fs.create(outFile); out.write(buf, 0,
-			 * buf.length); } }
-			 */
+			System.out.println("done with buffer rewrite code");
 			
-			System.out.flush();
+			/* code below sets up jna and then calls libmemfxns */
+            System.setProperty("jna.library.path", jpegLibPath); 
+            
+            byte[] out_buf = JnaInterface.getCompressedBytes(inBytes, ib.height, ib.width, actualNumChannels, jpegLibPath);
+            
+            System.out.println("***got compressed bytes");
+
+            Configuration conf = new Configuration(); 
+            FileSystem fs =	FileSystem.get(conf); 
+            
+            Path outFile = new Path("/user/jbu/output/blah.jpg");
+            if(!fs.exists(outFile)) 
+            { 
+                FSDataOutputStream out = fs.create(outFile); 
+                out.write(out_buf, 0, out_buf.length); 
+                out.close();
+            }
 		}
 	}
 
