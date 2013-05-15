@@ -49,6 +49,7 @@ public class MapperReducer
 		public void reduce(Text key, Iterable<IntWritable> values,
 				Context context) throws IOException, InterruptedException
 		{
+            long start, end;
 			System.out.println("***Reducer starting");
 
 			localFiles = DistributedCache.getLocalCacheFiles(context
@@ -101,7 +102,9 @@ public class MapperReducer
                     System.out.println("x: " + x + " y: " + y);
 
                     // read pixels
-                    ImageBundle ib = ImageConverter.readPixels(key.toString(), x / BLOCK_SIZE, y / BLOCK_SIZE);
+                    start = System.currentTimeMillis();
+                    ImageBundle ib = ImageConverter.readPixels(metadata.imp, x / BLOCK_SIZE, y / BLOCK_SIZE);
+                    System.out.println("Read pixels took: " + (System.currentTimeMillis() - start));
 
                     if(ib == null || ib.pixels == null)
                     {
@@ -115,6 +118,7 @@ public class MapperReducer
                     int actualNumChannels = 1;
                     if(ib.numChannels == 1 && ib.bytesPerPixel == 4)
                     {
+                        start = System.currentTimeMillis();
                         actualNumChannels = 3;
                         
                         // need to convert
@@ -135,10 +139,16 @@ public class MapperReducer
                                 inBytes_counter+=3;
                             }
                         }
+
+                        end = System.currentTimeMillis() - start;
+                        System.out.println("preprocessing buffer took: " + end);
                     }
 
                     // compress
+                    start = System.currentTimeMillis();
                     byte[] out_buf = JnaInterface.getCompressedBytes(inBytes, ib.height, ib.width, actualNumChannels, jpegLibPath);
+                    System.out.println("compression took: " + (System.currentTimeMillis() - start));
+
                     System.out.println("***got compressed bytes");
 
                     // write pixels
@@ -146,13 +156,15 @@ public class MapperReducer
                     FileSystem fs =	FileSystem.get(conf); 
 
                     final String basePath = "/user/jbu/output/" + fileName;
-                    Path outFile = new Path(basePath + "-" + (new Integer(x)).toString() + "_" + (new Integer(y)).toString());  
+                    Path outFile = new Path(basePath + "-" + (new Integer(x)).toString() + "_" + (new Integer(y)).toString() + ".jpg");  
 
                     if(!fs.exists(outFile)) 
                     { 
+                        start = System.currentTimeMillis();
                         FSDataOutputStream out = fs.create(outFile); 
                         out.write(out_buf, 0, out_buf.length); 
                         out.close();
+                        System.out.println("writing took: " + (System.currentTimeMillis() - start));
                     }
                 }
             }

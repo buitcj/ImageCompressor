@@ -14,6 +14,8 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
 public class ImageConverter {
+
+    /*
 	public static boolean convertImageTileToJpeg(String s_input_path,
 			String s_output_path_prefix) {
 		try {
@@ -82,6 +84,7 @@ public class ImageConverter {
 			return false;
 		}
 	}
+    */
 
     public static ImageBundle getImageInfo(String s_input_path) {
 		try {
@@ -103,6 +106,7 @@ public class ImageConverter {
             ImageBundle ib = new ImageBundle();
             ib.height = imp.getHeight();
             ib.width = imp.getWidth();
+            ib.imp = imp;
             return ib;
         }
         catch(Exception e)
@@ -122,8 +126,10 @@ public class ImageConverter {
 
 			// open the image============================
 
+			long start = System.currentTimeMillis();
 			ImagePlus imp = IJ.openImage(path.toString());
-
+			System.out.println("openImage took: " + (System.currentTimeMillis() - start));
+			
 			if (imp == null) {
 				System.out.println("imp was null");
 				return null;
@@ -143,8 +149,10 @@ public class ImageConverter {
 			System.out.println("slice_depth: " + slice_depth);
 			System.out.println("bytes_per_pixel: " + bytes_per_pixel);
 
+			start = System.currentTimeMillis();
 			ImageProcessor ip = imp.getProcessor();
-
+			System.out.println("getProcessor took: " + (System.currentTimeMillis() - start));
+			
 			if (ip == null) {
 				System.out.println("ip was null");
 				return null;
@@ -152,7 +160,9 @@ public class ImageConverter {
 
 			ip.setRoi(idx_x * 500, idx_y * 500, 500, 500);
 
+			start = System.currentTimeMillis();
 			ImageProcessor secondIp = ip.crop();
+			System.out.println("crop took: " + (System.currentTimeMillis() - start));
 
 			if (secondIp == null) {
 				System.out.println("secondIp was null");
@@ -162,8 +172,11 @@ public class ImageConverter {
 			ImageBundle ib = new ImageBundle();
 			ib.bytesPerPixel = bytes_per_pixel;
 			ib.numChannels = nChannels;
+			
+			start = System.currentTimeMillis();
 			ib.pixels = secondIp.getPixelsCopy();
-            
+			System.out.println("getPixelsCopy took: " + (System.currentTimeMillis() - start));
+			
 			ib.height = 500; //height;
 			ib.width = 500; //width;
             if(idx_x * 500 + 500 > width)
@@ -187,6 +200,74 @@ public class ImageConverter {
 		}
 	}
 
+	public static ImageBundle readPixels(ImagePlus imp, int idx_x, int idx_y) {
+        if (imp == null) {
+            System.out.println("imp was null");
+            return null;
+        }
+
+        int bytes_per_pixel = imp.getBytesPerPixel();
+        int height = imp.getHeight();
+        int width = imp.getWidth();
+        int nChannels = imp.getNChannels();
+        int slice_depth = imp.getNSlices();
+        int bit_depth = imp.getBitDepth();
+
+        System.out.println("height: " + height);
+        System.out.println("width: " + width);
+        System.out.println("bit_depth: " + bit_depth);
+        System.out.println("nChannels: " + nChannels);
+        System.out.println("slice_depth: " + slice_depth);
+        System.out.println("bytes_per_pixel: " + bytes_per_pixel);
+
+        long start = System.currentTimeMillis();
+        ImageProcessor ip = imp.getProcessor();
+        System.out.println("getProcessor took: " + (System.currentTimeMillis() - start));
+        
+        if (ip == null) {
+            System.out.println("ip was null");
+            return null;
+        }
+
+        ip.setRoi(idx_x * 500, idx_y * 500, 500, 500);
+
+        start = System.currentTimeMillis();
+        ImageProcessor secondIp = ip.crop();
+        System.out.println("crop took: " + (System.currentTimeMillis() - start));
+
+        if (secondIp == null) {
+            System.out.println("secondIp was null");
+            return null;
+        }
+
+        ImageBundle ib = new ImageBundle();
+        ib.bytesPerPixel = bytes_per_pixel;
+        ib.numChannels = nChannels;
+        
+        start = System.currentTimeMillis();
+        ib.pixels = secondIp.getPixelsCopy();
+        System.out.println("getPixelsCopy took: " + (System.currentTimeMillis() - start));
+        
+        ib.height = 500; //height;
+        ib.width = 500; //width;
+        if(idx_x * 500 + 500 > width)
+        {
+            ib.width = width - (idx_x * 500);
+        }
+        if(idx_y * 500 + 500 > height)
+        {
+            ib.height = height - (idx_y * 500);
+        }
+
+        if (ib.pixels == null) {
+            System.out.println("pixels was null");
+            return null;
+        }
+
+        return ib;
+	}
+
+    /*
 	public static boolean convertImageToJpeg(String s_input_path,
 			String s_output_path) {
 		System.out.println("***Starting call to convertImageToJpeg");
@@ -279,12 +360,13 @@ public class ImageConverter {
 			return false;
 		}
 	}
+    */
 
 	public static void main(String[] args) {
 		for (int i = 0; i < args.length; i++) {
 			System.out.println("args[" + i + "]: " + args[i]);
 		}
-		ImageConverter.convertImageTileToJpeg(args[0], args[1]);
+		// ImageConverter.convertImageTileToJpeg(args[0], args[1]);
 		// ImageConverter.convertImageToJpeg(args[0], args[1]);
 	}
 }

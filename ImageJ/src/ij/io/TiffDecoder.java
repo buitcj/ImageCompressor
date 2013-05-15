@@ -100,7 +100,6 @@ public class TiffDecoder {
 	}
 
 	final int getShort() throws IOException {
-		System.out.println("***Available:" + in.available());
 		int b1 = in.read();
 		int b2 = in.read();
 		if (littleEndian)
@@ -388,7 +387,6 @@ public class TiffDecoder {
 			//ij.IJ.write(i+"/"+nEntries+" "+tag + ", count=" + count + ", value=" + value);
 			//if (tag==0) return null;
 			
-			System.out.println("***TiffDecoder::OpenIFD pt 6");
 			switch (tag) {
 				case IMAGE_WIDTH: 
 					fi.width = value;
