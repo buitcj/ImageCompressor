@@ -49,6 +49,8 @@ public class MapperReducer
 		public void reduce(Text key, Iterable<IntWritable> values,
 				Context context) throws IOException, InterruptedException
 		{
+			long reduceStart = System.currentTimeMillis();
+			
             long start, end;
 			System.out.println("***Reducer starting");
 
@@ -168,6 +170,8 @@ public class MapperReducer
                     }
                 }
             }
+            
+            System.out.println("Reduce of one key took: " + (System.currentTimeMillis() - reduceStart));
 		}
 	}
 
@@ -175,6 +179,7 @@ public class MapperReducer
 	{
 		System.out.println("MapperReducer in main function");
 		Configuration conf = new Configuration();
+		conf.set("mapred.child.java.opts", "-Xmx1024m");
 
 		try
 		{
@@ -190,15 +195,19 @@ public class MapperReducer
 
 			job.setInputFormatClass(TextInputFormat.class);
 			job.setOutputFormatClass(TextOutputFormat.class);
-
+			
 			FileInputFormat.addInputPath(job, new Path(args[0]));
 			FileOutputFormat.setOutputPath(job, new Path(args[1]));
 
 			DistributedCache.addFileToClassPath(new Path(
-					"/user/jbu/lib/jna.jar"), job.getConfiguration(), fs);
+					//"/user/jbu/lib/jna.jar"), job.getConfiguration(), fs);
+					args[2]), job.getConfiguration(), fs);
 			DistributedCache.addCacheFile(new Path(
-					"/user/jbu/lib/libjpegcompressor.so").toUri(), job
+					//"/user/jbu/lib/libjpegcompressor.so").toUri(), job
+					args[3]).toUri(), job
 					.getConfiguration());
+			DistributedCache.addFileToClassPath(new Path(
+					args[4]), job.getConfiguration(), fs);
 
 			System.out.println("***Waiting for job completion");
 			

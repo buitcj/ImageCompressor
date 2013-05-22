@@ -461,6 +461,21 @@ public class Opener {
 			return null;
 		} 
 	}
+
+    // Opens the input stream as a tiff
+    public ImagePlus openAsTiffFromInputStream(InputStream inputIs, String name) {
+        try {
+            ImagePlus imp = null;
+            
+            imp = openTiff(inputIs, name);
+
+            IJ.showStatus("");
+            return imp;
+        } catch (Exception e) {
+            IJ.error("Couldn't openAsTiffFromInputStream\n\n");
+            return null;
+        } 
+    }
 	
 	/** Used by open() and IJ.open() to open text URLs. */
 	void openTextURL(String url) {

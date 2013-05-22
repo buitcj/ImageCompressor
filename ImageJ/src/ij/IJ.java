@@ -1524,6 +1524,11 @@ public class IJ {
 		return (new Opener()).openImage(path);
 	}
 
+	public static ImagePlus openImageAsTiffFromInputStream(InputStream is, String name) {
+		System.out.println("***openImage for Tiff starting");
+		return (new Opener()).openAsTiffFromInputStream(is, name);
+	}
+
 	/** Opens the nth image of the specified tiff stack. */
 	public static ImagePlus openImage(String path, int n) {
 		return (new Opener()).openImage(path, n);
